@@ -14,39 +14,27 @@ DATA_DIR = config.DATA_DIR
 FIGURES_DIR = config.FIGURES_DIR
 OUTPUT_DATA_FILE = config.OUTPUT_DATA_FILE
 
-# # Setup timed arrays 
-x_naught_vals = [-3.5]
-coupling_vals = [0.2]
-
-# x_naught_vals = [-4.5, -3.5, -3.5, -4.5, -4.5]
-# coupling_vals = [0, 0, 0.2, 0.09, 0]
-
-
-# G_inter_vals = [2] * uS
-# G_intra_vals = [1] * uS
-
-G_inter_vals = [1, 1, 4, 4, 1] * uS
-G_intra_vals = [1, 4, 4, 1, 1] * uS
-
-# G_inter_vals = [1, 1, 2, 2, 1] * uS
-# G_intra_vals = [1, 2, 2, 1, 1] * uS
-
-x_naught_dt = params.SIM_DURATION//len(x_naught_vals)
-coupling_dt = params.SIM_DURATION//len(coupling_vals)
-
-G_inter_dt = params.SIM_DURATION//len(G_inter_vals)
-G_intra_dt = params.SIM_DURATION//len(G_intra_vals)
-
-timed_x_naught = TimedArray(x_naught_vals, dt=x_naught_dt)
-timed_coupling_strength = TimedArray(coupling_vals, dt=coupling_dt)
-
-timed_G_inter = TimedArray(G_inter_vals, dt=G_inter_dt)
-timed_G_intra = TimedArray(G_intra_vals, dt=G_intra_dt)
-
 def run_sim(cb_on=True):
     # Setup Simulation
     defaultclock.dt = params.TAU_CLOCK / params.DT_SCALING
     print("defaultclock.dt is: ", defaultclock.dt)
+
+    # Build timed arrays from current params so sweep changes are picked up each call
+    x_naught_vals = [params.HR_X_NAUGHT]
+    coupling_vals = [params.COUPLING_STRENGTH]
+    G_inter_vals = [params.G_INTER / uS] * uS
+    G_intra_vals = [params.G_INTRA / uS] * uS
+
+    x_naught_dt = params.SIM_DURATION // len(x_naught_vals)
+    coupling_dt = params.SIM_DURATION // len(coupling_vals)
+    G_inter_dt = params.SIM_DURATION // len(G_inter_vals)
+    G_intra_dt = params.SIM_DURATION // len(G_intra_vals)
+
+    timed_x_naught = TimedArray(x_naught_vals, dt=x_naught_dt)
+    timed_coupling_strength = TimedArray(coupling_vals, dt=coupling_dt)
+    timed_G_inter = TimedArray(G_inter_vals, dt=G_inter_dt)
+    timed_G_intra = TimedArray(G_intra_vals, dt=G_intra_dt)
+
 
     # --- Population 1: Hindmarsh-Rose ---
     pop1_eqs = '''
@@ -364,12 +352,18 @@ def synchrony_sweep(quick=False, plot_mode='both'):
     """
     import pickle
 
-    param1_values = np.linspace(0.05, 0.5, 8)
-    param2_values = np.linspace(0.05, 0.5, 8)
-    
+    param1_values = np.linspace(0.0, 0.5, 8)   # CE (coupling strength)
+    param2_values = np.linspace(-4.5, -2.5, 8)  # X0 (epileptogenicity)
+
     n_realizations = 1
 
     chi_grid = np.full((len(param2_values), len(param1_values), n_realizations), np.nan)
+
+    run_num = 1
+    while os.path.exists(os.path.join(FIGURES_DIR, f'{run_num}_sweep_debug')):
+        run_num += 1
+    sweep_plot_dir = os.path.join(FIGURES_DIR, f'{run_num}_sweep_debug')
+    os.makedirs(sweep_plot_dir)
 
     total = len(param1_values) * len(param2_values) * n_realizations
     count = 0
@@ -378,19 +372,31 @@ def synchrony_sweep(quick=False, plot_mode='both'):
         for i, p1 in enumerate(param1_values):
             for k in range(n_realizations):
                 count += 1
-                print(f"[{count}/{total}] COUPLING_STRENGTH={p1:.3f}, G_INTER={p2:.3f}, realization {k+1}")
+                print(f"[{count}/{total}] CE={p1:.3f}, X0={p2:.3f}, realization {k+1}")
 
                 params.COUPLING_STRENGTH = p1
-                params.G_INTER = p2 * uS
+                params.HR_X_NAUGHT = p2
 
                 start_scope()
                 run_sim()
 
                 data = data_processing.load_sim_data()
-                x1 = data['results']['x1']
-                chi, _ = syn.autocorelate(x1)
+                res = data['results']
+                x1 = res['x1']
+                x2 = res['x2']
+                t  = res['t']
+                spike_matrix_1 = data_processing.create_spike_matrix_histo(res['spikes_n1'], params.NUM_CELLS, 0)
+                spike_matrix_2 = data_processing.create_spike_matrix_histo(res['spikes_n2'], params.NUM_CELLS, 0)
+
+                chi, _, _ = syn.autocorelate(x1)
                 chi_grid[j, i, k] = chi
                 print(f"  chi = {chi:.4f}")
+
+                plot_name = f'CE_{p1:.3f}_X0_{p2:.3f}_r{k+1}.png'
+                ph.standard_plot(t, x1, x2, spike_matrix_1, spike_matrix_2,
+                                 params.NUM_CELLS, params.SIM_DURATION / second,
+                                 save_path=os.path.join(sweep_plot_dir, plot_name),
+                                 show=False)
 
     # Save raw results
     sweep_results = {
@@ -398,7 +404,7 @@ def synchrony_sweep(quick=False, plot_mode='both'):
         'param1_values': param1_values,
         'param2_values': param2_values,
         'param1_name': 'COUPLING_STRENGTH',
-        'param2_name': 'G_INTER',
+        'param2_name': 'HR_X_NAUGHT',
         'n_realizations': n_realizations,
     }
     sweep_path = os.path.join(DATA_DIR, 'sweep_results.pkl')
@@ -408,26 +414,27 @@ def synchrony_sweep(quick=False, plot_mode='both'):
 
     chi_mean = np.nanmean(chi_grid, axis=2)
     chi_sd = np.nanstd(chi_grid, axis=2)
-    p1_label = r'coupling strength'
-    p2_label = r'$g_{inter}$ ($\mu$S)'
+    p1_label = r'$C_E$ (coupling strength)'
+    p2_label = r'$x_0$ (epileptogenicity)'
 
     if plot_mode == 'chi':
         ps.plot_synchrony_single(chi_mean, param1_values, param2_values,
                                  p1_label, p2_label,
                                  title=r'Synchrony $\chi$',
                                  vmin=0, vmax=1,
-                                 save_name='synchrony_chi_mean.png')
+                                 save_name=f'{run_num}_synchrony_chi_mean.png')
     elif plot_mode == 'sd':
         sd_max = np.nanmax(chi_sd) if np.nanmax(chi_sd) > 0 else 0.15
         ps.plot_synchrony_single(chi_sd, param1_values, param2_values,
                                  p1_label, p2_label,
                                  title=r'SD of $\chi$',
                                  vmin=0, vmax=sd_max,
-                                 save_name='synchrony_chi_sd.png')
+                                 save_name=f'{run_num}_synchrony_chi_sd.png')
     else:
         ps.plot_synchrony(chi_mean, chi_sd,
                           param1_values, param2_values,
-                          p1_label, p2_label)
+                          p1_label, p2_label,
+                          run_num=run_num)
 
 
 def main():
@@ -461,6 +468,8 @@ def main():
         analyze_populations()
     if ('t' in run_mode):
         test()
+    if ('s' in run_mode):
+        synchrony_sweep(plot_mode=args.sweep_plot)
 
 if __name__ == "__main__":
     main()
