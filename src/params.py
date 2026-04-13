@@ -10,7 +10,7 @@ TRANSIENT = 10
 # --- Coupling & Global Logic ---
 # ISOLATE = 0: decoupled, 1: coupled
 ISOLATE = 1
-COUPLING_STRENGTH = 0.1
+COUPLING_STRENGTH = 0.1 # - Timed array
 W_MAX = 0.006 
 
 # --- Population 1: Hindmarsh-Rose (HR) ---
@@ -20,7 +20,7 @@ HR_C = 1.0
 HR_D = 5.0
 HR_S = 4.0
 HR_I_APP = 6.85
-HR_X_NAUGHT = -3.5      
+HR_X_NAUGHT = -3.5 # - timed array
 HR_R = 0.00002 / msecond
 HR_SIGMA = 1/50
 HR_THRESHOLD = 'x > 1.5'
@@ -59,14 +59,14 @@ SYN_ALPHA_INH = 5 / (mmolar * msecond)
 SYN_BETA_INH = 0.18 / msecond
 SYN_E_INH = -80 * mV
 
-# Conductances
-G_INTRA = 0.1 * uS  
-G_INTER = 0.2 * uS
+# Conductances - Replaced with Timed arrays
+# G_INTRA = 0.1 * uS  
+# G_INTER = 0.2 * uS
 
 # Plasticity
-THETA_LTD_START = 0.05 # 0.027
-THETA_LTD_END = 0.1 # 0.047
-THETA_LTP_START = 0.15 # 0.087
+THETA_LTD_START = 0.05 # 0.05
+THETA_LTD_END = 0.5 # 0.1
+THETA_LTP_START = 0.55 # 0.15
 A_LTD = 1
 A_LTP = 2
 

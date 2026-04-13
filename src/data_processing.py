@@ -11,16 +11,12 @@ DATA_DIR = config.DATA_DIR
 FIGURES_DIR = config.FIGURES_DIR
 OUTPUT_DATA_FILE = config.OUTPUT_DATA_FILE
 
-def create_spike_matrix_histo(spike_data, num_cells, transient):
+def create_spike_matrix_histo(spike_data, num_cells):
     spike_times = spike_data['t'] 
     neuron_indices = spike_data['i'] 
 
-    duration = params.SIM_DURATION/second
+    duration = params.SIM_DURATION/second+params.TRANSIENT
     dt = 0.02  # 20ms per bin
-
-    valid = spike_times > transient
-    spike_times = spike_times[valid]
-    neuron_indices = neuron_indices[valid]
 
     time_bins = np.arange(0, duration + dt, dt)
     neuron_bins = np.arange(0, num_cells + 1)
@@ -48,7 +44,7 @@ def get_params_dict():
                 params_dict[key] = val
     return params_dict
 
-def save_data(M_N1, M_N2, SM_N1, SM_N2, M_S1_1):
+def save_data(M_N1, M_N2, SM_N1, SM_N2, M_S1_1=None, cb_on=True):
 
     # Save Data, Metadata, and Parameters
     if not os.path.exists(DATA_DIR):
@@ -61,15 +57,30 @@ def save_data(M_N1, M_N2, SM_N1, SM_N2, M_S1_1):
         'params': get_params_dict(),
         'results': {
             't': np.asarray(M_N1.t),
+            # POP 1
             'x1': np.asarray(M_N1.x),
+            'y1' : np.asarray(M_N1.y),
+            'z1': np.asarray(M_N1.z), 
             'I_syn_inter_1': np.asarray(M_N1.I_syn_inter),
-            'syn_wpre' : np.asarray(M_S1_1.Wpre),
+            'I_syn_intra_1': np.asarray(M_N1.I_syn_intra),
+            # POP 2
             'x2': np.asarray(M_N2.x),
+            'n2': np.asarray(M_N2.n),
             'I_syn_inter_2': np.asarray(M_N2.I_syn_inter),
+            # SPIKES
             'spikes_n1': {'t': np.asarray(SM_N1.t), 'i': np.asarray(SM_N1.i)},
             'spikes_n2': {'t': np.asarray(SM_N2.t), 'i': np.asarray(SM_N2.i)}
         }
     }
+
+    if cb_on:
+        cb_sim_results = {
+            'syn_wpre' : np.asarray(M_S1_1.Wpre),
+            'u' : np.asarray(M_S1_1.u),
+            'Ca' : np.asarray(M_S1_1.Ca),
+        }
+        sim_data['results'].update(cb_sim_results)
+
 
     # Dump to pickle
     filepath = os.path.join(DATA_DIR, OUTPUT_DATA_FILE)

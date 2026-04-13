@@ -80,7 +80,7 @@ def standard_plot(t, x1, x2, spike_matrix_1, spike_matrix_2, num_cells, sim_dura
         ax4.plot(t, timed_x_naught(t*second), label='x0', color='blue')
         ax4.set_title("x0 over time")
         ax4.plot(t, timed_coupling_strength(t*second), label='Ce', color='orange')
-        # ax4.set_xlabel("Time (s)")
+        ax4.set_ylabel("x0")
         ax4.set_title("Ce and x0 over time")
         ax4.legend()
         
@@ -91,7 +91,7 @@ def standard_plot(t, x1, x2, spike_matrix_1, spike_matrix_2, num_cells, sim_dura
         ax5.set_xlabel("Time (s)")
         ax5.set_ylabel("Conductance (uS)")
         ax5.legend()
-
+    plt.xlim(params.TRANSIENT, params.SIM_DURATION/second+params.TRANSIENT)
     # optionally zoom
     if zoom:
         _apply_zoom([ax1, ax2, ax3, ax4, ax5])
@@ -102,6 +102,7 @@ def standard_plot(t, x1, x2, spike_matrix_1, spike_matrix_2, num_cells, sim_dura
     if show:
         plt.show()
     plt.close()
+
 
 # POP PLOTS
 def raster_plot(population: int, t, x, spike_matrix, num_cells, sim_duration, zoom=False):
@@ -248,17 +249,36 @@ def plot_both_avg(t, x1, y1, z1, x2, n):
     plt.savefig(os.path.join(FIGURES_DIR, "pop1_and_pop2_single.png"), format="png")
     plt.show()
 
-def plot_wpre(t, x, wpre):
-    x_mean = np.mean(x, axis=0)
-    wpre_mean = np.mean(wpre, axis=0)
+def plot_wpre(t, x, wpre, u, Ca):
+    fig, (ax1, ax2, ax3, ax4, ax5, ax6, ax7) = plt.subplots(7, 1, figsize=(10, 8), sharex=True)
+    Ca = np.asarray(Ca)
+    x_post = np.asarray(x[1])
 
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
+    plasticity = (1 
+        - params.A_LTD * (Ca > params.THETA_LTD_START).astype(float) * (Ca < params.THETA_LTD_END).astype(float) 
+        + params.A_LTP * (Ca > params.THETA_LTP_START).astype(float))
+    sigma_Ca = 1 / (1 + exp(-(x_post - 0.5) / 0.2))
+
+
     fig.suptitle("Wpre Within Population 1")
-    ax1.plot(t, x_mean)
-    ax1.set_ylabel("Pop 1 x mean")
-    ax2.plot(t, wpre_mean)
-    ax2.set_ylabel("Wpre")
-    ax2.set_xlabel("time (s)")
+    ax1.plot(t, x[0])
+    ax1.set_ylabel("Neuron 1 x ")
+    ax2.plot(t, x[1])
+    ax2.set_ylabel("Neuron 2 x ")
+    ax3.plot(t, wpre)
+    ax3.set_ylabel("Wpre")
+    # ax4.plot(t, T)
+    ax4.plot(t, u)
+    ax4.set_ylabel("u")
+    ax5.plot(t, Ca)
+    ax5.set_ylabel("Ca")
+    ax6.plot(t, plasticity)
+    ax6.set_ylabel("plasticity")
+    ax7.plot(t, sigma_Ca)
+    ax7.set_ylabel("ca_signal")
+    ax7.set_xlabel("time (s)")
+
+
 
     plt.savefig(os.path.join(FIGURES_DIR, "N1_to_1_wpre.png"), format="png")
     plt.show()
