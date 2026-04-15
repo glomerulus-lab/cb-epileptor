@@ -4,6 +4,7 @@
 # data
 .npz
 
-src/__pycache__
+**/__pycache__
+**/*.pyc
 src/data
 src/figures

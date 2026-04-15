@@ -28,7 +28,7 @@ def plot_synchrony_single(chi_matrix, param1_values, param2_values,
                           title=r'Synchrony $\chi$',
                           vmin=0, vmax=1,
                           save_name='synchrony_single.png'):
-    
+
     if not os.path.exists(FIGURES_DIR):
         os.makedirs(FIGURES_DIR)
 

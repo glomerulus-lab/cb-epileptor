@@ -4,19 +4,18 @@ import matplotlib.pyplot as plt
 import os
 import numpy as np
 import config
-import scipy
 import params
-from scipy import signal
+
 DATA_DIR = config.DATA_DIR
 FIGURES_DIR = config.FIGURES_DIR
 OUTPUT_DATA_FILE = config.OUTPUT_DATA_FILE
 
 
 def _apply_zoom(axes):
-    XMIN, XMAX =  params.SIM_DURATION/second - 15, params.SIM_DURATION/second -10
+    XMIN, XMAX = params.SIM_DURATION/second - 15, params.SIM_DURATION/second - 10
     for ax in axes:
         ax.set_xlim(XMIN, XMAX)
-    
+
 def find_clim(spike_matrix):
     return np.max(spike_matrix)
 
@@ -39,14 +38,14 @@ def standard_plot(t, x1, x2, spike_matrix_1, spike_matrix_2, num_cells, sim_dura
         fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(30, 15), sharex=True, layout='constrained', gridspec_kw={'height_ratios': [2, 2, 2,]})
 
     fig.suptitle(f'Weighted LFP + Both Rasters')
-    fig.set_constrained_layout_pads(w_pad=0.1, h_pad=0.1, 
+    fig.set_constrained_layout_pads(w_pad=0.1, h_pad=0.1,
                                      wspace=0.02, hspace=0.02)
 
     x1_mean = np.mean(x1, axis=0)
     x2_mean = np.mean(x2, axis=0)
     x_mean = (0.8 * x1_mean) + (0.2 * x2_mean)
     ax1.plot(t, x_mean)
-    ax1.set_ylabel("Mean x weighted 80/20") 
+    ax1.set_ylabel("Mean x weighted 80/20")
     ax1.set_title("LFP signal (80/20 weight)")
 
     # raster 1
@@ -60,7 +59,7 @@ def standard_plot(t, x1, x2, spike_matrix_1, spike_matrix_2, num_cells, sim_dura
     # config colorbar
     cbar = fig.colorbar(raster1, ax=ax2, location='right', aspect=25, pad=0.001)
     cbar.minorticks_on()
-   
+
     # raster 2
     ML_CLIM = find_clim(spike_matrix_2)
     raster2 = ax3.imshow(spike_matrix_2, interpolation='none', aspect='auto',
@@ -76,14 +75,14 @@ def standard_plot(t, x1, x2, spike_matrix_1, spike_matrix_2, num_cells, sim_dura
 
     # plot timed arrays if they exist
     if timed_x_naught and timed_coupling_strength:
-        # create a 4th axis for the timed arrays        
+        # create a 4th axis for the timed arrays
         ax4.plot(t, timed_x_naught(t*second), label='x0', color='blue')
         ax4.set_title("x0 over time")
         ax4.plot(t, timed_coupling_strength(t*second), label='Ce', color='orange')
         ax4.set_ylabel("x0")
         ax4.set_title("Ce and x0 over time")
         ax4.legend()
-        
+
     if timed_g_inter and timed_g_intra:
         ax5.plot(t, timed_g_intra(t*second), label='g_intra', color='blue')
         ax5.set_title("g variables over time")
@@ -104,7 +103,7 @@ def standard_plot(t, x1, x2, spike_matrix_1, spike_matrix_2, num_cells, sim_dura
 # POP PLOTS
 def raster_plot(population: int, t, x, spike_matrix, num_cells, sim_duration, zoom=False):
     population_name = ""
-    if population == 1: 
+    if population == 1:
         population_name = "Hindmarsh Rose"
     else:
         population_name = "Morris Lecar"
@@ -115,8 +114,8 @@ def raster_plot(population: int, t, x, spike_matrix, num_cells, sim_duration, zo
     # Plot the averaged data instead of just neuron 0
     x_mean = np.mean(x, axis=0)
     ax1.plot(t, x_mean)
-    ax1.set_ylabel("Mean x") 
-    
+    ax1.set_ylabel("Mean x")
+
     # configure main raster plot
     raster = ax2.imshow(spike_matrix, interpolation='none', aspect='auto',
                    origin='lower', extent=[0, sim_duration, 0, num_cells], clim=(0, clim_max))
@@ -183,11 +182,11 @@ def plot_hr_mean(t, x1, y1, z1):
 
     # Plot the averaged data instead of just neuron 0
     ax1.plot(t, x1_mean)
-    ax1.set_ylabel("Mean x1") # Updated label
+    ax1.set_ylabel("Mean x1")
     ax2.plot(t, y1_mean)
-    ax2.set_ylabel("Mean y1") # Updated label
+    ax2.set_ylabel("Mean y1")
     ax3.plot(t, z1_mean)
-    ax3.set_ylabel("Mean z1") # Updated label
+    ax3.set_ylabel("Mean z1")
     ax3.set_xlabel("Time (s)")
 
     plt.savefig(os.path.join(FIGURES_DIR, "pop1_mean_neurons.png"), format="png")
@@ -209,7 +208,7 @@ def plot_ml_mean():
     pass
 
 def plot_both(t, x1, x2):
-    # One neuron from both pops 
+    # One neuron from both pops
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
     fig.suptitle("One Neuron From Each Population")
     ax1.plot(t, x1[0])
@@ -219,13 +218,12 @@ def plot_both(t, x1, x2):
     ax2.set_xlabel("Time (s)")
     ax2.set_ylabel("x2")
 
-    #plt.savefig("figures/interictal_pop2_r4e-5_10s.png", format="png")
     plt.savefig(os.path.join(FIGURES_DIR, "pop1_and_pop2_single.png"), format="png")
     plt.show()
 
 
 def plot_both_avg(t, x1, y1, z1, x2, n):
-    # neurons averaged from both pops 
+    # neurons averaged from both pops
     x1_mean = np.mean(x1, axis=0)
     y1_mean = np.mean(y1, axis=0)
     z1_mean = np.mean(z1, axis=0)
@@ -241,112 +239,5 @@ def plot_both_avg(t, x1, y1, z1, x2, n):
     ax2.set_xlabel("Time (s)")
     ax2.set_ylabel("x2")
 
-
-    #plt.savefig("figures/interictal_pop2_r4e-5_10s.png", format="png")
     plt.savefig(os.path.join(FIGURES_DIR, "pop1_and_pop2_single.png"), format="png")
-    plt.show()
-
-def plot_wpre(t, x, wpre, u, Ca):
-    fig, (ax1, ax2, ax3, ax4, ax5, ax6, ax7) = plt.subplots(7, 1, figsize=(10, 8), sharex=True)
-    Ca = np.asarray(Ca)
-    x_post = np.asarray(x[1])
-
-    plasticity = (1 
-        - params.A_LTD * (Ca > params.THETA_LTD_START).astype(float) * (Ca < params.THETA_LTD_END).astype(float) 
-        + params.A_LTP * (Ca > params.THETA_LTP_START).astype(float))
-    sigma_Ca = 1 / (1 + exp(-(x_post - 0.5) / 0.2))
-
-
-    fig.suptitle("Wpre Within Population 1")
-    ax1.plot(t, x[0])
-    ax1.set_ylabel("Neuron 1 x ")
-    ax2.plot(t, x[1])
-    ax2.set_ylabel("Neuron 2 x ")
-    ax3.plot(t, wpre)
-    ax3.set_ylabel("Wpre")
-    # ax4.plot(t, T)
-    ax4.plot(t, u)
-    ax4.set_ylabel("u")
-    ax5.plot(t, Ca)
-    ax5.set_ylabel("Ca")
-    ax6.plot(t, plasticity)
-    ax6.set_ylabel("plasticity")
-    ax7.plot(t, sigma_Ca)
-    ax7.set_ylabel("ca_signal")
-    ax7.set_xlabel("time (s)")
-
-
-
-    plt.savefig(os.path.join(FIGURES_DIR, "N1_to_1_wpre.png"), format="png")
-    plt.show()
-    
-
-
-# SYNCHRONY PLOTS
-# =============================================================
-def plot_auto_lfp(data):
-    smoothed_data = scipy.ndimage.gaussian_filter(data, sigma=2.0)
-
-    # plot data and smoothed data on same plot in different color
-    fig, (ax1) = plt.subplots(1, 1, figsize=(10, 8), sharex=True)
-    data_window = data[0][1000000:]
-    smoothed_data_window = smoothed_data[0][1000000:]
-    ax1.plot(data_window, color='blue')
-    ax1.plot(smoothed_data_window, color='orange')
-    ax1.set_xlabel("Time (s)")
-    plt.suptitle("x1 LFP vs Smoothed x1")
-    
-
-    plt.savefig(os.path.join(FIGURES_DIR, "auto_lfp.png"), format="png")
-    plt.show()
-
-def plot_kop(phase_matrix):
-    print(phase_matrix.shape)
-    print(phase_matrix[0])
-    # plot the first array in the phase matrix
-    fig, ax = plt.subplots(1, 1, figsize=(10, 8))
-    plt.suptitle("Kop Phase For a Single Neuron")
-    ax.set_xlabel("Time (ms)")
-    ax.set_ylabel("Phase (angle in radians)")
-    ax.plot(phase_matrix[0])
-    plt.savefig(os.path.join(FIGURES_DIR, "kop.png"), format="png")
-    plt.show()
-
-def plot_autocorr(autocor, lag):
-    fig, ax = plt.subplots(1, 1, figsize=(10, 8))
-    plt.suptitle("Autocorrelation")
-    ax.set_xlabel("Lag (s)")
-    ax.set_ylabel("Signal")
-    ax.plot(lag, autocor)
-    plt.savefig(os.path.join(FIGURES_DIR, "autocorr.png"), format="png")
-    plt.show()
-
-
-def plot_mean_potential():
-    pass
-    # pop1_mean = np.mean(x1, axis=0)
-    # pop2_mean = np.mean(x2, axis=0)
-    # mean_potential = 0.8 * pop1_mean + 0.2 * pop2_mean
-    # fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 8))
-    # ax1.plot(t, pop2_mean)
-    # ax1.set_xlabel("Time (s)")
-    # ax1.set_ylabel("Weighted mean potential (a.u.)")
-
-def plot_power_spec(x1, x2):
-    # compute mean potential
-    x1_mean = np.mean(x1, axis=0)
-    x2_mean = np.mean(x2, axis=0)
-    x_mean = (0.8 * x1_mean) + (0.2 * x2_mean)
-
-    fig, (ax1) = plt.subplots(1, 1, figsize=(12, 10))
-    fig.suptitle("Power Spectrum (Ictal)")
-    fs = 1 / (params.TAU_CLOCK/params.DT_SCALING) / Hz
-    f, Pxx = signal.welch(x_mean, fs=fs)
-
-    ax1.semilogy(f, Pxx)
-    ax1.set_ylabel("Amplitude (a.u.)")
-    ax1.set_xlabel("Frequency (Hz)")
-
-    
-    plt.savefig(os.path.join(FIGURES_DIR, "power.png"), format="png")
     plt.show()
