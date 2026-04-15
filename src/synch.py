@@ -3,7 +3,7 @@ import numpy as np
 import scipy
 
 
-def autocorelate(data):
+def autocorrelate(data):
     # apply gaussian smoothing
     smoothed_data = scipy.ndimage.gaussian_filter(data, sigma=2.0)
     chi, autocorr, lag = synchrony_stats(smoothed_data)
@@ -78,12 +78,3 @@ def compute_phase(neuron_idx, spike_times, duration):
         phase_matrix.append(theta)
 
     return np.array(phase_matrix)
-
-def find_spikes(data, threshold):
-    # unifinished...decided to use brian's spike monitor to find spikes instead
-    # probably don't need this function but will wait for confirmation that brian version works
-    indices = scipy.signal.argrelmax(data, axis = 1) # x
-    # these are pairwise coordinates of the spikes 
-    mask = np.where(data[indices] > threshold)
-    spike_indices = (indices[0][mask], indices[1][mask])
-    return None

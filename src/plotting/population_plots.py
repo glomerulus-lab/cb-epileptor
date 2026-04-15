@@ -23,19 +23,20 @@ def standard_plot(t, x1, x2, spike_matrix_1, spike_matrix_2, num_cells, sim_dura
     # extract timed array vars from timed_args
     timed_x_naught = timed_args.get('timed_x_naught', None)
     timed_coupling_strength = timed_args.get('timed_coupling_strength', None)
-    timed_I_app = timed_args.get('timed_I_app', None)
     timed_g_intra = timed_args.get('timed_g_intra', None)
     timed_g_inter = timed_args.get('timed_g_inter', None)
 
-    # lfp
-    if timed_x_naught and timed_coupling_strength and timed_g_intra and timed_g_inter:
-        fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(5, 1, figsize=(30, 15), sharex=True, layout='constrained', gridspec_kw={'height_ratios': [3, 3, 3, 1, 1]})
-    elif timed_x_naught and timed_coupling_strength:
-        fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(30, 15), sharex=True, layout='constrained', gridspec_kw={'height_ratios': [3, 3, 3, 1]})
-    elif timed_g_inter and timed_g_intra:
-        fig, (ax1, ax2, ax3, ax5) = plt.subplots(4, 1, figsize=(30, 15), sharex=True, layout='constrained', gridspec_kw={'height_ratios': [3, 3, 3, 1]})
-    else:
-        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(30, 15), sharex=True, layout='constrained', gridspec_kw={'height_ratios': [2, 2, 2,]})
+    has_x0_ce = bool(timed_x_naught and timed_coupling_strength)
+    has_g = bool(timed_g_inter and timed_g_intra)
+    n_axes = 3 + has_x0_ce + has_g
+    height_ratios = [3, 3, 3] + ([1] if has_x0_ce else []) + ([1] if has_g else [])
+
+    fig, axes = plt.subplots(n_axes, 1, figsize=(30, 15), sharex=True,
+                             layout='constrained',
+                             gridspec_kw={'height_ratios': height_ratios})
+    ax1, ax2, ax3 = axes[0], axes[1], axes[2]
+    ax4 = axes[3] if has_x0_ce else None
+    ax5 = axes[3 + has_x0_ce] if has_g else None
 
     fig.suptitle(f'Weighted LFP + Both Rasters')
     fig.set_constrained_layout_pads(w_pad=0.1, h_pad=0.1,
@@ -75,7 +76,6 @@ def standard_plot(t, x1, x2, spike_matrix_1, spike_matrix_2, num_cells, sim_dura
 
     # plot timed arrays if they exist
     if timed_x_naught and timed_coupling_strength:
-        # create a 4th axis for the timed arrays
         ax4.plot(t, timed_x_naught(t*second), label='x0', color='blue')
         ax4.set_title("x0 over time")
         ax4.plot(t, timed_coupling_strength(t*second), label='Ce', color='orange')
@@ -93,7 +93,7 @@ def standard_plot(t, x1, x2, spike_matrix_1, spike_matrix_2, num_cells, sim_dura
     plt.xlim(params.TRANSIENT, params.SIM_DURATION/second+params.TRANSIENT)
     # optionally zoom
     if zoom:
-        _apply_zoom([ax1, ax2, ax3, ax4, ax5])
+        _apply_zoom(axes)
     # save plot
     fig.get_layout_engine().set(w_pad=0.2, h_pad=0.2, hspace=0.2, wspace=0.2)
     out_path = save_path if save_path is not None else os.path.join(FIGURES_DIR, "standard_plot.png")

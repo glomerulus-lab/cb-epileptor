@@ -15,8 +15,8 @@ import config
 import params
 import data_processing
 import synch as syn
-import plotting as ph
-from sim import run_sim
+import plotting.population_plots as ph
+from simulation.core import run_sim
 
 
 def main():
@@ -43,20 +43,19 @@ def main():
     # Give this job its own data subdirectory to avoid file conflicts with parallel jobs
     job_data_dir = os.path.join('data', 'jobs', job_id)
     os.makedirs(job_data_dir, exist_ok=True)
-    data_processing.DATA_DIR = job_data_dir
 
     # Run simulation — save_data writes to job_data_dir/output_data.pkl
-    run_sim()
+    run_sim(data_dir=job_data_dir)
 
     # Load results
-    data = data_processing.load_sim_data()
+    data = data_processing.load_sim_data(data_dir=job_data_dir)
     res = data['results']
     x1 = res['x1']
     x2 = res['x2']
     t  = res['t']
 
     # Compute synchrony
-    chi, _, _ = syn.autocorelate(x1)
+    chi, _, _ = syn.autocorrelate(x1)
     print(f"  chi = {chi:.4f}")
 
     # Save per-job result to data/results/

@@ -72,3 +72,9 @@ A_LTP = 2
 
 TAU_WPRE = 5 * second
 TAU_CA = 200 * msecond
+
+# Timed array schedules
+X_NAUGHT_VALS = [-3.5]
+COUPLING_VALS = [0.2]
+G_INTER_VALS = [1, 1, 4, 4, 1] * uS
+G_INTRA_VALS = [1, 4, 4, 1, 1] * uS

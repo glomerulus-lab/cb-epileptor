@@ -7,7 +7,7 @@ from simulation.timed_arrays import (
     timed_x_naught, timed_coupling_strength, timed_G_inter, timed_G_intra
 )
 
-def run_sim(cb_on=True):
+def run_sim(cb_on=True, data_dir=None):
     # Setup Simulation
     defaultclock.dt = params.TAU_CLOCK / params.DT_SCALING
     print("defaultclock.dt is: ", defaultclock.dt)
@@ -189,4 +189,4 @@ def run_sim(cb_on=True):
 
     # Run
     run(params.SIM_DURATION)
-    data_processing.save_data(M_N1, M_N2, SM_N1, SM_N2, M_S1_1, cb_on)
+    data_processing.save_data(M_N1, M_N2, SM_N1, SM_N2, M_S1_1, cb_on, data_dir=data_dir)

@@ -44,11 +44,12 @@ def get_params_dict():
                 params_dict[key] = val
     return params_dict
 
-def save_data(M_N1, M_N2, SM_N1, SM_N2, M_S1_1=None, cb_on=True):
+def save_data(M_N1, M_N2, SM_N1, SM_N2, M_S1_1=None, cb_on=True, data_dir=None):
+    out_dir = data_dir if data_dir is not None else DATA_DIR
 
     # Save Data, Metadata, and Parameters
-    if not os.path.exists(DATA_DIR):
-        os.makedirs(DATA_DIR)
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
     sim_data = {
         'metadata': {
             'timestamp': datetime.datetime.now().isoformat(),
@@ -83,15 +84,16 @@ def save_data(M_N1, M_N2, SM_N1, SM_N2, M_S1_1=None, cb_on=True):
 
 
     # Dump to pickle
-    filepath = os.path.join(DATA_DIR, OUTPUT_DATA_FILE)
+    filepath = os.path.join(out_dir, OUTPUT_DATA_FILE)
     with open(filepath, 'wb') as f:
         pickle.dump(sim_data, f)
     
     print(f"Simulation data and parameters saved to: {filepath}")
 
-def load_sim_data():
+def load_sim_data(data_dir=None):
+    out_dir = data_dir if data_dir is not None else DATA_DIR
         # Load pickle
-    filepath = os.path.join(DATA_DIR, OUTPUT_DATA_FILE)
+    filepath = os.path.join(out_dir, OUTPUT_DATA_FILE)
     with open(filepath, 'rb') as f:
         data = pickle.load(f)
 

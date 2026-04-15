@@ -15,8 +15,10 @@ def plot_auto_lfp(data):
 
     # plot data and smoothed data on same plot in different color
     fig, (ax1) = plt.subplots(1, 1, figsize=(10, 8), sharex=True)
-    data_window = data[0][1000000:]
-    smoothed_data_window = smoothed_data[0][1000000:]
+    dt = params.TAU_CLOCK / params.DT_SCALING / second
+    transient_samples = int(params.TRANSIENT / dt)
+    data_window = data[0][transient_samples:]
+    smoothed_data_window = smoothed_data[0][transient_samples:]
     ax1.plot(data_window, color='blue')
     ax1.plot(smoothed_data_window, color='orange')
     ax1.set_xlabel("Time (s)")

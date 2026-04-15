@@ -11,7 +11,6 @@ import plotting.plasticity_plots as plph
 import plotting.analysis_plots as aph
 from simulation.core import run_sim
 from simulation.timed_arrays import timed_x_naught, timed_coupling_strength, timed_G_inter, timed_G_intra
-from param_sweep import synchrony_sweep
 
 DATA_DIR = config.DATA_DIR
 FIGURES_DIR = config.FIGURES_DIR
@@ -97,7 +96,7 @@ def analyze_populations():
     data_processing.dump_spikes_to_file(np.asarray(pop1_neuron_idx), np.asarray(pop1_spike_times))
 
     print("============HINDMARSH ROSE STATS============")
-    chi, autocorr, lag = syn.autocorelate(x1)
+    chi, autocorr, lag = syn.autocorrelate(x1)
     print(f'synchrony measure: {chi}\nautocorrelation: {autocorr}')
     z, r, psi = syn.KOP(pop1_neuron_idx, pop1_spike_times, params.SIM_DURATION/second)
     print(f'r: {np.mean(r)}')
@@ -106,7 +105,7 @@ def analyze_populations():
     aph.plot_kop(phase_matrix)
 
     print("\n============MORRIS LECAR STATS============")
-    chi, autocorr, lag = syn.autocorelate(x2)
+    chi, autocorr, lag = syn.autocorrelate(x2)
     print(f'synchrony measure: {chi}\nautocorrelation: {autocorr}')
     z, r, psi = syn.KOP(pop2_neuron_idx, pop2_spike_times, params.SIM_DURATION/second)
     print(f'r: {np.mean(r)}')
@@ -128,11 +127,7 @@ def test():
 def main():
     parser = argparse.ArgumentParser(description="Run and/or plot the simulation.")
     parser.add_argument('-m', '--mode', type=str, default='rp',
-                        help="Run mode: 'r' run, 'p' plot, 'a' analyze, 't' test, "
-                             "'s' synchrony sweep, 's_test' test synchrony plot.")
-    parser.add_argument('--sweep-plot', type=str, default='both',
-                        choices=['chi', 'sd', 'both'],
-                        help="Which synchrony plot to generate: 'chi', 'sd', or 'both'.")
+                        help="Run mode: 'r' run, 'p' plot, 'a' analyze, 't' test.")
     parser.add_argument('--cb', action='store_true', default=True,
                         help="Enable CB synapses (default: enabled)")
     parser.add_argument('--no-cb', dest='cb', action='store_false',
