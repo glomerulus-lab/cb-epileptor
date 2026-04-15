@@ -289,17 +289,6 @@ def plot_synapse_vars(t, Ca, Wpre, x_post, u, agg='mean', title='', save_name='s
     5-row figure summarizing synaptic state variables across a synapse group.
 
     Panels top->bottom: Ca, Wpre, X (x_post), U, sigmaCa (derived)
-
-    Parameters
-    ----------
-    t        : 1D time array
-    Ca       : (n_synapses, n_time) calcium trace per synapse
-    Wpre     : (n_synapses, n_time) plastic weight per synapse
-    x_post   : (n_post_neurons, n_time) post-neuron state variable
-    u        : (n_synapses, n_time) release-probability per synapse
-    agg      : 'mean' or 'std' — reduction applied across axis 0
-    title    : figure suptitle
-    save_name: filename written into FIGURES_DIR
     """
     Ca = np.asarray(Ca)
     Wpre = np.asarray(Wpre)

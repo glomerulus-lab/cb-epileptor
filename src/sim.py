@@ -212,10 +212,17 @@ def run_sim(cb_on=True):
     SM_N2 = SpikeMonitor(N2)
 
     M_S1_1 = StateMonitor(S1_to_1, ['Wpre', 'Ca', 'u'], record=True)
+    # e->i (HR->ML), i->e (ML->HR), i->i (ML->ML)
+    M_S1_2 = StateMonitor(S1_to_2, ['Wpre', 'Ca', 'u'], record=True)
+    M_S2_1 = StateMonitor(S2_to_1, ['Wpre', 'Ca', 'u'], record=True)
+    M_S2_2 = StateMonitor(S2_to_2, ['Wpre', 'Ca', 'u'], record=True)
 
     # Run
     run(params.SIM_DURATION)
-    data_processing.save_data(M_N1, M_N2, SM_N1, SM_N2, M_S1_1, cb_on)
+    data_processing.save_data(M_N1, M_N2, SM_N1, SM_N2,
+                              M_S1_1=M_S1_1, M_S1_2=M_S1_2,
+                              M_S2_1=M_S2_1, M_S2_2=M_S2_2,
+                              cb_on=cb_on)
 
 def plot_output(cb_on=True):
     if not os.path.exists(FIGURES_DIR):
@@ -233,17 +240,27 @@ def plot_output(cb_on=True):
         Ca = res['Ca'][0]
         ph.plot_wpre(t, x1, wpre, u, Ca)
 
-        # 5-row mean/std synapse plots for S1_to_1 (pre=N1[0], post=N1[1])
-        s11_Ca = res['Ca']
-        s11_Wpre = res['syn_wpre']
-        s11_u = res['u']
-        s11_xpost = x1[1:2]
-        ph.plot_synapse_vars(t, s11_Ca, s11_Wpre, s11_xpost, s11_u,
-                             agg='mean', title='S1_to_1 (HR->HR) mean',
-                             save_name='S1_1_mean.png')
-        ph.plot_synapse_vars(t, s11_Ca, s11_Wpre, s11_xpost, s11_u,
-                             agg='std', title='S1_to_1 (HR->HR) std',
-                             save_name='S1_1_std.png')
+        # 5-row mean/std synapse plots for each synapse group.
+        # (Ca, Wpre, u) come from the synapse StateMonitors; x_post comes
+        # from the post-population neuron StateMonitor.
+        synapse_groups = [
+            # (label, file_prefix, Ca, Wpre, u, x_post)
+            ('S1_to_1 (HR->HR)', 'S1_1',
+             res['Ca'], res['syn_wpre'], res['u'], x1[1:2]),
+            ('S1_to_2 (e->i, HR->ML)', 'S1_2',
+             res['S1_2_Ca'], res['S1_2_wpre'], res['S1_2_u'], x2),
+            ('S2_to_1 (i->e, ML->HR)', 'S2_1',
+             res['S2_1_Ca'], res['S2_1_wpre'], res['S2_1_u'], x1),
+            ('S2_to_2 (i->i, ML->ML)', 'S2_2',
+             res['S2_2_Ca'], res['S2_2_wpre'], res['S2_2_u'], x2),
+        ]
+        for label, prefix, gCa, gWpre, gu, gxpost in synapse_groups:
+            ph.plot_synapse_vars(t, gCa, gWpre, gxpost, gu,
+                                 agg='mean', title=f'{label} mean',
+                                 save_name=f'{prefix}_mean.png')
+            ph.plot_synapse_vars(t, gCa, gWpre, gxpost, gu,
+                                 agg='std', title=f'{label} std',
+                                 save_name=f'{prefix}_std.png')
 
     # Retrieve parameters from saved metadata
     saved_params = data['params']
