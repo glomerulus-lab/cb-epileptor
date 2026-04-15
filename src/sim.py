@@ -14,26 +14,28 @@ DATA_DIR = config.DATA_DIR
 FIGURES_DIR = config.FIGURES_DIR
 OUTPUT_DATA_FILE = config.OUTPUT_DATA_FILE
 
+# Build timed arrays from current params so sweep changes are picked up each call
+x_naught_vals = [params.HR_X_NAUGHT]
+coupling_vals = [params.COUPLING_STRENGTH]
+G_inter_vals = [params.G_INTER / uS] * uS
+G_intra_vals = [params.G_INTRA / uS] * uS
+
+x_naught_dt = params.SIM_DURATION // len(x_naught_vals)
+coupling_dt = params.SIM_DURATION // len(coupling_vals)
+G_inter_dt = params.SIM_DURATION // len(G_inter_vals)
+G_intra_dt = params.SIM_DURATION // len(G_intra_vals)
+
+timed_x_naught = TimedArray(x_naught_vals, dt=x_naught_dt)
+timed_coupling_strength = TimedArray(coupling_vals, dt=coupling_dt)
+timed_G_inter = TimedArray(G_inter_vals, dt=G_inter_dt)
+timed_G_intra = TimedArray(G_intra_vals, dt=G_intra_dt)
+
 def run_sim(cb_on=True):
     # Setup Simulation
     defaultclock.dt = params.TAU_CLOCK / params.DT_SCALING
     print("defaultclock.dt is: ", defaultclock.dt)
 
-    # Build timed arrays from current params so sweep changes are picked up each call
-    x_naught_vals = [params.HR_X_NAUGHT]
-    coupling_vals = [params.COUPLING_STRENGTH]
-    G_inter_vals = [params.G_INTER / uS] * uS
-    G_intra_vals = [params.G_INTRA / uS] * uS
 
-    x_naught_dt = params.SIM_DURATION // len(x_naught_vals)
-    coupling_dt = params.SIM_DURATION // len(coupling_vals)
-    G_inter_dt = params.SIM_DURATION // len(G_inter_vals)
-    G_intra_dt = params.SIM_DURATION // len(G_intra_vals)
-
-    timed_x_naught = TimedArray(x_naught_vals, dt=x_naught_dt)
-    timed_coupling_strength = TimedArray(coupling_vals, dt=coupling_dt)
-    timed_G_inter = TimedArray(G_inter_vals, dt=G_inter_dt)
-    timed_G_intra = TimedArray(G_intra_vals, dt=G_intra_dt)
 
 
     # --- Population 1: Hindmarsh-Rose ---
@@ -231,6 +233,17 @@ def plot_output(cb_on=True):
         Ca = res['Ca'][0]
         ph.plot_wpre(t, x1, wpre, u, Ca)
 
+        # 5-row mean/std synapse plots for S1_to_1 (pre=N1[0], post=N1[1])
+        s11_Ca = res['Ca']
+        s11_Wpre = res['syn_wpre']
+        s11_u = res['u']
+        s11_xpost = x1[1:2]
+        ph.plot_synapse_vars(t, s11_Ca, s11_Wpre, s11_xpost, s11_u,
+                             agg='mean', title='S1_to_1 (HR->HR) mean',
+                             save_name='S1_1_mean.png')
+        ph.plot_synapse_vars(t, s11_Ca, s11_Wpre, s11_xpost, s11_u,
+                             agg='std', title='S1_to_1 (HR->HR) std',
+                             save_name='S1_1_std.png')
 
     # Retrieve parameters from saved metadata
     saved_params = data['params']
