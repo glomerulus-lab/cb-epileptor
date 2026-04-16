@@ -282,7 +282,52 @@ def plot_wpre(t, x, wpre, u, Ca):
 
     plt.savefig(os.path.join(FIGURES_DIR, "N1_to_1_wpre.png"), format="png")
     plt.show()
-    
+
+
+def plot_synapse_vars(t, Ca, Wpre, x_post, u, agg='mean', title='', save_name='synapse_vars.png'):
+    """
+    5-row figure summarizing synaptic state variables across a synapse group.
+
+    Panels top->bottom: Ca, Wpre, X (x_post), U, sigmaCa (derived)
+    """
+    Ca = np.asarray(Ca)
+    Wpre = np.asarray(Wpre)
+    u = np.asarray(u)
+    x_post = np.asarray(x_post)
+
+    # Derived sigma_Ca matches the sim.py synaptic equation (+0.8 offset)
+    sigma_Ca = 1.0 / (1.0 + np.exp(-(x_post + 0.8) / 0.2))
+
+    if agg == 'mean':
+        reduce = np.mean
+    elif agg == 'std':
+        reduce = np.std
+    else:
+        raise ValueError("agg must be 'mean' or 'std'")
+
+    Ca_agg = reduce(Ca, axis=0)
+    Wpre_agg = reduce(Wpre, axis=0)
+    x_agg = reduce(x_post, axis=0)
+    u_agg = reduce(u, axis=0)
+    sigma_agg = reduce(sigma_Ca, axis=0)
+
+    fig, axes = plt.subplots(5, 1, figsize=(12, 14), sharex=True, constrained_layout=True)
+    fig.suptitle(title)
+
+    axes[0].plot(t, Ca_agg)
+    axes[0].set_ylabel(f"{agg} Ca")
+    axes[1].plot(t, Wpre_agg)
+    axes[1].set_ylabel(f"{agg} Wpre")
+    axes[2].plot(t, x_agg)
+    axes[2].set_ylabel(f"{agg} X (x_post)")
+    axes[3].plot(t, u_agg)
+    axes[3].set_ylabel(f"{agg} U")
+    axes[4].plot(t, sigma_agg)
+    axes[4].set_ylabel(f"{agg} sigma_Ca")
+    axes[4].set_xlabel("Time (s)")
+
+    plt.savefig(os.path.join(FIGURES_DIR, save_name), format='png')
+    plt.show()
 
 
 # SYNCHRONY PLOTS

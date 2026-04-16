@@ -44,7 +44,8 @@ def get_params_dict():
                 params_dict[key] = val
     return params_dict
 
-def save_data(M_N1, M_N2, SM_N1, SM_N2, M_S1_1=None, cb_on=True):
+def save_data(M_N1, M_N2, SM_N1, SM_N2, M_S1_1=None,
+              M_S1_2=None, M_S2_1=None, M_S2_2=None, cb_on=True):
 
     # Save Data, Metadata, and Parameters
     if not os.path.exists(DATA_DIR):
@@ -60,7 +61,7 @@ def save_data(M_N1, M_N2, SM_N1, SM_N2, M_S1_1=None, cb_on=True):
             # POP 1
             'x1': np.asarray(M_N1.x),
             'y1' : np.asarray(M_N1.y),
-            'z1': np.asarray(M_N1.z), 
+            'z1': np.asarray(M_N1.z),
             'I_syn_inter_1': np.asarray(M_N1.I_syn_inter),
             'I_syn_intra_1': np.asarray(M_N1.I_syn_intra),
             # POP 2
@@ -74,12 +75,34 @@ def save_data(M_N1, M_N2, SM_N1, SM_N2, M_S1_1=None, cb_on=True):
     }
 
     if cb_on:
-        cb_sim_results = {
-            'syn_wpre' : np.asarray(M_S1_1.Wpre),
-            'u' : np.asarray(M_S1_1.u),
-            'Ca' : np.asarray(M_S1_1.Ca),
-        }
-        sim_data['results'].update(cb_sim_results)
+        # e->e (HR->HR)
+        if M_S1_1 is not None:
+            sim_data['results'].update({
+                'syn_wpre': np.asarray(M_S1_1.Wpre),
+                'u':        np.asarray(M_S1_1.u),
+                'Ca':       np.asarray(M_S1_1.Ca),
+            })
+        # e->i (HR->ML)
+        if M_S1_2 is not None:
+            sim_data['results'].update({
+                'S1_2_wpre': np.asarray(M_S1_2.Wpre),
+                'S1_2_u':    np.asarray(M_S1_2.u),
+                'S1_2_Ca':   np.asarray(M_S1_2.Ca),
+            })
+        # i->e (ML->HR)
+        if M_S2_1 is not None:
+            sim_data['results'].update({
+                'S2_1_wpre': np.asarray(M_S2_1.Wpre),
+                'S2_1_u':    np.asarray(M_S2_1.u),
+                'S2_1_Ca':   np.asarray(M_S2_1.Ca),
+            })
+        # i->i (ML->ML)
+        if M_S2_2 is not None:
+            sim_data['results'].update({
+                'S2_2_wpre': np.asarray(M_S2_2.Wpre),
+                'S2_2_u':    np.asarray(M_S2_2.u),
+                'S2_2_Ca':   np.asarray(M_S2_2.Ca),
+            })
 
 
     # Dump to pickle
